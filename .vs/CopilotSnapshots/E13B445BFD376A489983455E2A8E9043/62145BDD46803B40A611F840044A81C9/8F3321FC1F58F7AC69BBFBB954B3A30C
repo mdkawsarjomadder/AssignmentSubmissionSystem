@@ -1,0 +1,42 @@
+﻿using System.Linq;
+using AssignmentManagement.API.Entities;
+
+namespace AssignmentManagement.API.Data;
+
+public static class DbSeeder
+{
+    // Simple initial seeding for demo users. Keep minimal to avoid side effects.
+    public static void SeedData(AppDbContext context)
+    {
+        // Ensure database is created/migrated before calling seed.
+        if (context.Users.Any())
+            return;
+
+        var admin = new User
+        {
+            FullName = "Admin User",
+            Email = "admin@example.com",
+            PasswordHash = "admin123", // replace with real hash in production
+            Role = UserRole.Admin
+        };
+
+        var teacher = new User
+        {
+            FullName = "Demo Teacher",
+            Email = "teacher@example.com",
+            PasswordHash = "teacher123",
+            Role = UserRole.Teacher
+        };
+
+        var student = new User
+        {
+            FullName = "Demo Student",
+            Email = "student@example.com",
+            PasswordHash = "student123",
+            Role = UserRole.Student
+        };
+
+        context.Users.AddRange(admin, teacher, student);
+        context.SaveChanges();
+    }
+}

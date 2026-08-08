@@ -1,0 +1,20 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace AssignmentManagement.API.DTOs;
+
+public class CreateAssignmentDto
+{
+    [Required]
+    public string Title { get; set; } = string.Empty;
+
+    public string Description { get; set; } = string.Empty;
+
+    [Required]
+    public DateTime Deadline { get; set; }
+
+    [Range(1, 1000)]
+    public decimal MaxMarks { get; set; } = 100;
+
+    [Required]
+    public int SubjectId { get; set; }
+}

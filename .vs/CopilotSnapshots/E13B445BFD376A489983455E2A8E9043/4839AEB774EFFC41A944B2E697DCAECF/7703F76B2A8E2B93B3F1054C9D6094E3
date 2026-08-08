@@ -1,0 +1,34 @@
+﻿using AssignmentManagement.API.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace AssignmentManagement.API.Data;
+
+public class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+    public DbSet<User> Users => Set<User>();
+    public DbSet<ClassGroup> ClassGroups => Set<ClassGroup>();
+    public DbSet<Subject> Subjects => Set<Subject>();
+    public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<Submission> Submissions => Set<Submission>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Subject -> Teacher relationship (Nullable)
+        modelBuilder.Entity<Subject>()
+            .HasOne(s => s.Teacher)
+            .WithMany()
+            .HasForeignKey(s => s.TeacherId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // User -> ClassGroup relationship (Nullable)
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.ClassGroup)
+            .WithMany(c => c.Subjects)
+            .HasForeignKey(u => u.ClassGroupId)
+            .OnDelete(DeleteBehavior.SetNull);
+    }
+}

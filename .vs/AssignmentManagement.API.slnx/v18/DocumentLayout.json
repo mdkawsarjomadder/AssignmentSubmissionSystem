@@ -1,0 +1,333 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\D_Net\\AssignmentManagement.API\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\assignmentmanagement.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\assignmentmanagement.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\entities\\assignment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\entities\\assignment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\controllers\\submissionscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\controllers\\submissionscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\dtos\\gradesubmissiondto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\dtos\\gradesubmissiondto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\controllers\\assignmentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\controllers\\assignmentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\dtos\\submitassignmentdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\dtos\\submitassignmentdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\dtos\\assignmentresponsedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\dtos\\assignmentresponsedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\dtos\\createassignmentdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\dtos\\createassignmentdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\dtos\\authresponsedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\dtos\\authresponsedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\dtos\\logindto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\dtos\\logindto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\dbseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\dbseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\entities\\submission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\entities\\submission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\entities\\subject.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\entities\\subject.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\entities\\classgroup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\entities\\classgroup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\entities\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\entities\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|d:\\d_net\\assignmentmanagement.api\\assignmentmanagement.api\\entities\\userrole.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BAF3EED4-34D2-8810-71D5-0A54662AB812}|AssignmentManagement.API\\AssignmentManagement.API.csproj|solutionrelative:assignmentmanagement.api\\entities\\userrole.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{0ad07096-bba9-4900-a651-0598d26f6d24}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AssignmentManagement.API.csproj",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\AssignmentManagement.API.csproj",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\AssignmentManagement.API.csproj",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\AssignmentManagement.API.csproj",
+              "RelativeToolTip": "AssignmentManagement.API\\AssignmentManagement.API.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-08-05T20:19:17.453Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Program.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\Program.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Program.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T20:15:36.059Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "GradeSubmissionDto.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\GradeSubmissionDto.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\DTOs\\GradeSubmissionDto.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\GradeSubmissionDto.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\DTOs\\GradeSubmissionDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T20:03:48.055Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "SubmitAssignmentDto.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\SubmitAssignmentDto.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\DTOs\\SubmitAssignmentDto.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\SubmitAssignmentDto.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\DTOs\\SubmitAssignmentDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAcwAsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T20:03:28.009Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "AssignmentResponseDto.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\AssignmentResponseDto.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\DTOs\\AssignmentResponseDto.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\AssignmentResponseDto.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\DTOs\\AssignmentResponseDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T20:03:01.953Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "AssignmentsController.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Controllers\\AssignmentsController.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\Controllers\\AssignmentsController.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Controllers\\AssignmentsController.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\Controllers\\AssignmentsController.cs",
+              "ViewState": "AgIAACsAAAAAAAAAAAAcwEMAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T20:04:22.835Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Assignment.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\Assignment.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\Entities\\Assignment.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\Assignment.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\Entities\\Assignment.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAYwAsAAAA1AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T18:29:32.13Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "SubmissionsController.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Controllers\\SubmissionsController.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\Controllers\\SubmissionsController.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Controllers\\SubmissionsController.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\Controllers\\SubmissionsController.cs",
+              "ViewState": "AgIAAD4AAAAAAAAAAAAgwEkAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T20:04:51.564Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "CreateAssignmentDto.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\CreateAssignmentDto.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\DTOs\\CreateAssignmentDto.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\CreateAssignmentDto.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\DTOs\\CreateAssignmentDto.cs",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAAwBMAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T20:02:18.992Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "AuthResponseDto.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\AuthResponseDto.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\DTOs\\AuthResponseDto.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\AuthResponseDto.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\DTOs\\AuthResponseDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T19:32:02.308Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "LoginDto.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\LoginDto.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\DTOs\\LoginDto.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DTOs\\LoginDto.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\DTOs\\LoginDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAA1AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T19:31:41.697Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "DbSeeder.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DbSeeder.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\DbSeeder.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\DbSeeder.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\DbSeeder.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T19:15:37.922Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "AppDbContext.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Data\\AppDbContext.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\Data\\AppDbContext.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Data\\AppDbContext.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\Data\\AppDbContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACEAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T18:31:06.735Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "Submission.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\Submission.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\Entities\\Submission.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\Submission.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\Entities\\Submission.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T18:30:06.911Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "Subject.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\Subject.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\Entities\\Subject.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\Subject.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\Entities\\Subject.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T18:28:56.395Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\Controllers\\AuthController.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\Controllers\\AuthController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADoAAAA8AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T19:32:44.529Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "ClassGroup.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\ClassGroup.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\Entities\\ClassGroup.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\ClassGroup.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\Entities\\ClassGroup.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T18:27:40.409Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "User.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\User.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\Entities\\User.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\User.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\Entities\\User.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T18:25:53.286Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "UserRole.cs",
+              "DocumentMoniker": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\UserRole.cs",
+              "RelativeDocumentMoniker": "AssignmentManagement.API\\Entities\\UserRole.cs",
+              "ToolTip": "D:\\D_Net\\AssignmentManagement.API\\AssignmentManagement.API\\Entities\\UserRole.cs",
+              "RelativeToolTip": "AssignmentManagement.API\\Entities\\UserRole.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T18:24:08.145Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
