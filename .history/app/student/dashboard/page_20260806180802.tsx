@@ -1,0 +1,178 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { getAuthToken, removeAuthToken } from '@/lib/auth';
+
+interface Assignment {
+  id: number;
+  title: string;
+  description: string;
+  deadline: string;
+  maxMarks: number;
+  subjectName?: string;
+}
+
+export default function StudentDashboard() {
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [submissionContent, setSubmissionContent] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const fetchAssignments = async () => {
+    try {
+      const token = getAuthToken();
+      const res = await axios.get('http://localhost:5074/api/Assignments', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = res.data.data || res.data;
+      if (Array.isArray(data)) setAssignments(data);
+    } catch (err) {
+      console.error('Failed to fetch assignments', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAssignments();
+  }, []);
+
+  const handleLogout = () => {
+    removeAuthToken();
+    window.location.href = '/login';
+  };
+
+  const handleSubmitAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAssignment) return;
+    setSubmitting(true);
+    setMessage('');
+
+    try {
+      const token = getAuthToken();
+      await axios.post(
+        'http://localhost:5074/api/Submissions',
+        {
+          assignmentId: selectedAssignment.id,
+          answerContent: submissionContent, // 🔴 'content' এর জায়গায় 'answerContent' হবে
+        },
+        {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        }
+      );
+      setMessage('অ্যাসাইনমেন্ট সফলভাবে সাবমিট হয়েছে!');
+      setSubmissionContent('');
+      setTimeout(() => {
+        setSelectedAssignment(null);
+        setMessage('');
+      }, 1500);
+    } catch (err: any) {
+      setMessage(err.response?.data?.message || err.response?.data || 'সাবমিশনে সমস্যা হয়েছে।');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between pb-6 border-b border-slate-800">
+          <div>
+            <h1 className="text-3xl font-extrabold">Student Dashboard</h1>
+            <p className="text-sm text-slate-400 mt-1">View your pending assignments and submit solutions.</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="px-6 py-2.5 rounded-xl border border-rose-950/70 text-rose-500 text-xs font-semibold hover:bg-rose-950/20 transition cursor-pointer"
+          >
+            Logout
+          </button>
+        </div>
+
+        {/* List Section */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold">Your Assignments</h2>
+
+          {loading ? (
+            <div className="p-8 text-center text-slate-400 bg-slate-900 rounded-2xl">Loading...</div>
+          ) : assignments.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 bg-slate-900 rounded-2xl">No assignments available.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {assignments.map((item) => (
+                <div key={item.id} className="p-6 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-semibold uppercase px-2.5 py-1 rounded bg-blue-950 text-blue-400 border border-blue-800">
+                      {item.subjectName || 'Assignment'}
+                    </span>
+                    <h3 className="text-lg font-bold">{item.title}</h3>
+                    <p className="text-xs text-slate-400 line-clamp-2">{item.description}</p>
+                  </div>
+                  <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Max: {item.maxMarks}</span>
+                    <button
+                      onClick={() => setSelectedAssignment(item)}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition cursor-pointer"
+                    >
+                      Submit Task
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Submit Modal */}
+        {selectedAssignment && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 className="text-lg font-bold">Submit: {selectedAssignment.title}</h3>
+                <button onClick={() => setSelectedAssignment(null)} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+
+              {message && <div className="p-3 bg-slate-800 text-blue-400 text-xs rounded-xl">{message}</div>}
+
+              <form onSubmit={handleSubmitAssignment} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Solution / File Link / Text</label>
+                  <textarea
+                    rows={5}
+                    required
+                    value={submissionContent}
+                    onChange={(e) => setSubmissionContent(e.target.value)}
+                    placeholder="Write your answer or paste Google Drive/GitHub link here..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm text-white focus:outline-none focus:border-blue-500 transition resize-none"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAssignment(null)}
+                    className="w-1/2 py-2.5 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-1/2 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold disabled:opacity-50"
+                  >
+                    {submitting ? 'Submitting...' : 'Confirm Submit'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
