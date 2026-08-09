@@ -8,22 +8,22 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Database Setup
+// 1. Database & CORS
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 2. CORS Policy Setup (AllowAll)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowAll", builder =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        builder.WithOrigins("http://localhost:3000") 
+               .AllowAnyHeader()
+               .AllowAnyMethod()
+               .AllowCredentials();
     });
 });
 
-// 3. JWT Authentication Setup
+// 2. JWT Authentication Setup
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var secretKey = jwtSettings["Secret"] ?? "SuperSecretKeyForAssignmentManagementSystem2026SecureJwtAuthKey!";
 
@@ -44,7 +44,7 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"] ?? "AssignmentClient",
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
         
-        // Standard Claim Types
+        // 🔴 Standard Claim Types
         RoleClaimType = ClaimTypes.Role,
         NameClaimType = ClaimTypes.NameIdentifier
     };
@@ -54,14 +54,13 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// 4. Swagger Setup
+// 3. Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "AssignmentManagement.API", Version = "v1" });
 
-    // Schema ID & Route Conflict Fixes
+   
     c.CustomSchemaIds(type => type.FullName);
-    c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -88,10 +87,9 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
 var app = builder.Build();
 
-// 5. Database Seeding & Migration
+// 4. Seeding & Pipeline
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -108,17 +106,13 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// 6. Pipeline Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseRouting();
-
-// CORS Middleware ("AllowAll" পলিসি সঠিকভাবে যুক্ত করা হয়েছে)
-app.UseCors("AllowAll");
+app.UseCors("AllowNextJS");
 
 app.UseAuthentication();
 app.UseAuthorization();
