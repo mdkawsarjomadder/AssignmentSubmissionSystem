@@ -4,17 +4,17 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 
 interface NavbarProps {
-  onLogout?: () => void;
   title?: string;
   subtitle?: string;
-  children?: React.ReactNode;
+  onLogout?: () => void;
+  children?: React.ReactNode; // অতিরিক্ত বাটন (যেমন Create Assignment) পাস করার জন্য
 }
 
 export default function Navbar({
-  onLogout,
   title = "Dashboard",
   subtitle = "Hello! Welcome back to your assignment control center.",
-  children
+  onLogout,
+  children,
 }: NavbarProps) {
   const router = useRouter();
 
@@ -34,18 +34,20 @@ export default function Navbar({
   };
 
   return (
-    // max-w-6xl mx-auto px-6 যোগ করায় Navbar-এর ডানে ও বামে খালি জায়গা (Space) চলে আসবে
-    <div className="max-w-6xl mx-auto px-6 pt-6 pb-6 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-slate-800 gap-4 mb-8">
       <div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
           {title}
         </h1>
-        <p className="text-xs sm:text-sm mt-1 text-slate-400">
-          {subtitle}
-        </p>
+        {subtitle && (
+          <p className="text-xs sm:text-sm mt-1 text-slate-400">
+            {subtitle}
+          </p>
+        )}
       </div>
 
       <div className="flex items-center gap-3">
+        {/* যদি টিচার ড্যাশবোর্ডে + Create Assignment-এর মতো বাটন দিতে চান */}
         {children}
 
         <button

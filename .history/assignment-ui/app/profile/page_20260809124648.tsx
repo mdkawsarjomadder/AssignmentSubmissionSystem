@@ -33,61 +33,37 @@ export default function ProfilePage() {
     setImagePreview(storedImage);
   }, []);
 
-  // 🔴 ইমেজ সাইজ ছোট (Compress) করার হেলপার ফাংশন
-  const compressAndSetImage = (file: File) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 300; // ছবি ৩০০ পিক্সেল সাইজে নামিয়ে আনা হবে
-        const scaleFactor = MAX_WIDTH / img.width;
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * scaleFactor;
-
-        const ctx = canvas.getContext("2d");
-        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        // JPEG ফরম্যাটে কমানো কোয়ালিটিতে Base64 তৈরি
-        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
-        setImagePreview(compressedBase64);
-      };
-    };
-  };
-
-  // ইমেজ সিলেক্ট হ্যান্ডলার
+  // ইমেজ আপলোড ও প্রিভিউ হ্যান্ডলার
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      compressAndSetImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  // প্রোফাইল সেভ হ্যান্ডলার (Safe with Try-Catch)
+  // প্রোফাইল সেভ হ্যান্ডলার (Client-Side Safe)
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
-    try {
+    setTimeout(() => {
+      // LocalStorage-এ ডাটা আপডেট রাখা
       localStorage.setItem("fullName", fullName);
       localStorage.setItem("phone", phone);
       localStorage.setItem("address", address);
-      
       if (imagePreview) {
         localStorage.setItem("profileImage", imagePreview);
       }
 
       setMessage("Profile updated successfully!");
       setIsEditing(false);
-    } catch (err) {
-      console.error("Storage Error:", err);
-      setMessage("Image size too large! Please choose a smaller image.");
-    } finally {
       setLoading(false);
-    }
+    }, 500);
   };
 
   return (
@@ -131,11 +107,7 @@ export default function ProfilePage() {
           </div>
 
           {message && (
-            <div className={`mb-4 text-xs p-3 rounded-lg text-center font-medium ${
-              message.includes("successfully") 
-                ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400" 
-                : "bg-rose-500/10 border border-rose-500/30 text-rose-400"
-            }`}>
+            <div className="mb-4 text-xs p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-center font-medium">
               {message}
             </div>
           )}

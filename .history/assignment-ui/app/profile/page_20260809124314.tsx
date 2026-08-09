@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import axios from "axios";
 
 export default function ProfilePage() {
   const [role, setRole] = useState<string>("");
-  const [userId, setUserId] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -17,74 +17,64 @@ export default function ProfilePage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    // LocalStorage থেকে প্রোফাইল ডাটা লোড করা
-    const storedRole = localStorage.getItem("role") || "Student";
-    const storedId = localStorage.getItem("userId") || "USER-10293";
+    // LocalStorage থেকে বিদ্যমান প্রোফাইল ডাটা লোড করা
+    const storedRole = localStorage.getItem("role") || "";
     const storedName = localStorage.getItem("fullName") || "User Name";
-    const storedPhone = localStorage.getItem("phone") || "Not provided";
-    const storedAddress = localStorage.getItem("address") || "Not provided";
+    const storedPhone = localStorage.getItem("phone") || "";
+    const storedAddress = localStorage.getItem("address") || "";
     const storedImage = localStorage.getItem("profileImage") || null;
 
     setRole(storedRole);
-    setUserId(storedId);
     setFullName(storedName);
     setPhone(storedPhone);
     setAddress(storedAddress);
     setImagePreview(storedImage);
   }, []);
 
-  // 🔴 ইমেজ সাইজ ছোট (Compress) করার হেলপার ফাংশন
-  const compressAndSetImage = (file: File) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 300; // ছবি ৩০০ পিক্সেল সাইজে নামিয়ে আনা হবে
-        const scaleFactor = MAX_WIDTH / img.width;
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * scaleFactor;
-
-        const ctx = canvas.getContext("2d");
-        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        // JPEG ফরম্যাটে কমানো কোয়ালিটিতে Base64 তৈরি
-        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
-        setImagePreview(compressedBase64);
-      };
-    };
-  };
-
-  // ইমেজ সিলেক্ট হ্যান্ডলার
+  // ইমেজ ফাইল সিলেক্ট ও প্রিভিউ হ্যান্ডলার
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      compressAndSetImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  // প্রোফাইল সেভ হ্যান্ডলার (Safe with Try-Catch)
-  const handleSaveProfile = (e: React.FormEvent) => {
+  // প্রোফাইল সেভ হ্যান্ডলার
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
+      // LocalStorage-এ আপডেট ডেটা রাখা
       localStorage.setItem("fullName", fullName);
       localStorage.setItem("phone", phone);
       localStorage.setItem("address", address);
-      
       if (imagePreview) {
         localStorage.setItem("profileImage", imagePreview);
+      }
+
+      // API তে আপডেট রিকোয়েস্ট পাঠানোর সুযোগ (যদি ব্যাকএন্ডে এন্ডপয়েন্ট থাকে)
+      const token = localStorage.getItem("token");
+      if (token) {
+        await axios.put(
+          "http://localhost:5074/api/Auth/profile",
+          { fullName, phone, address, profileImage: imagePreview },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ).catch(() => {
+          // API প্রস্তুত না থাকলে ইগনোর করবে
+        });
       }
 
       setMessage("Profile updated successfully!");
       setIsEditing(false);
     } catch (err) {
-      console.error("Storage Error:", err);
-      setMessage("Image size too large! Please choose a smaller image.");
+      console.error("Failed to save profile", err);
+      setMessage("Failed to update profile.");
     } finally {
       setLoading(false);
     }
@@ -95,7 +85,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-slate-950 text-white p-6 flex justify-center items-center">
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-lg w-full shadow-2xl transition-all">
           
-          {/* Top Header & Avatar */}
+          {/* Header & Avatar */}
           <div className="flex items-center space-x-5 mb-6 pb-6 border-b border-slate-800">
             <div className="relative group">
               <div className="w-20 h-20 rounded-full bg-indigo-600 flex items-center justify-center text-3xl font-bold text-white overflow-hidden border-2 border-indigo-500/50 shadow-inner">
@@ -108,17 +98,16 @@ export default function ProfilePage() {
               
               {isEditing && (
                 <label className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition text-xs font-semibold text-white">
-                  Upload
+                  Change
                   <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                 </label>
               )}
             </div>
 
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-white">{fullName}</h2>
-              <p className="text-xs text-indigo-400 font-mono mt-0.5">ID: {userId}</p>
+              <h2 className="text-2xl font-bold text-white">{fullName || "User Profile"}</h2>
               <p className="text-xs text-slate-400 capitalize mt-1">
-                Role: <span className="text-emerald-400 font-semibold">{role}</span>
+                Role: <span className="text-indigo-400 font-semibold">{role}</span>
               </p>
             </div>
 
@@ -131,11 +120,7 @@ export default function ProfilePage() {
           </div>
 
           {message && (
-            <div className={`mb-4 text-xs p-3 rounded-lg text-center font-medium ${
-              message.includes("successfully") 
-                ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400" 
-                : "bg-rose-500/10 border border-rose-500/30 text-rose-400"
-            }`}>
+            <div className="mb-4 text-xs p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-center font-medium">
               {message}
             </div>
           )}
@@ -150,7 +135,7 @@ export default function ProfilePage() {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter Full Name"
+                  placeholder="John Doe"
                   className="w-full bg-slate-950 border border-slate-800 text-white rounded-lg p-2.5 outline-none focus:border-indigo-500 transition"
                 />
               </div>
@@ -189,19 +174,15 @@ export default function ProfilePage() {
             <div className="space-y-4 text-sm">
               <div className="flex justify-between py-2 border-b border-slate-800/60">
                 <span className="text-slate-400">Full Name</span>
-                <span className="font-medium text-slate-200">{fullName}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">User ID</span>
-                <span className="font-mono text-indigo-300">{userId}</span>
+                <span className="font-medium text-slate-200">{fullName || "Not provided"}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-800/60">
                 <span className="text-slate-400">Phone Number</span>
-                <span className="font-medium text-slate-200">{phone}</span>
+                <span className="font-medium text-slate-200">{phone || "Not provided"}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-800/60">
                 <span className="text-slate-400">Address</span>
-                <span className="font-medium text-slate-200">{address}</span>
+                <span className="font-medium text-slate-200">{address || "Not provided"}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-800/60">
                 <span className="text-slate-400">Account Type</span>
