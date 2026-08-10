@@ -7,7 +7,7 @@
         public string Description { get; set; } = string.Empty;
         public DateTime Deadline { get; set; }
         public decimal MaxMarks { get; set; }
-        public bool IsPublished { get; set; }
+        public bool IsPublished { get; set; } = false;
         public int SubjectId { get; set; }
         public Subject Subject { get; set; } = null!;
 

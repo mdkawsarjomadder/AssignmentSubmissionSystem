@@ -1,4 +1,5 @@
 ﻿using AssignmentManagement.API.Entities;
+using AssignmentManagement.API.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AssignmentManagement.API.Data;
@@ -12,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Subject> Subjects => Set<Subject>();
     public DbSet<Assignment> Assignments => Set<Assignment>();
     public DbSet<Submission> Submissions => Set<Submission>();
+    public DbSet<SchoolClass> schoolClasses => Set<SchoolClass>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

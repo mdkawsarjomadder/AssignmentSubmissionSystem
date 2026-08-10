@@ -83,6 +83,7 @@ public class AssignmentsController : ControllerBase
             MaxMarks = dto.MaxMarks,
             Deadline = dto.Deadline,
             SubjectId = dto.SubjectId,
+            IsPublished = dto.IsPublished,
             CreatedById = teacherId // Foreign Key
         };
 
@@ -91,4 +92,40 @@ public class AssignmentsController : ControllerBase
 
         return Ok("Assignment created successfully.");
     }
+
+    //GetPut:--------------------Update create 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateAssignment(int id, [FromBody] CreateAssignmentDto dto)
+    {
+        var assignment = await _context.Assignments.FindAsync(id);
+        if (assignment == null) return NotFound();
+
+        assignment.Title = dto.Title;
+        assignment.Description = dto.Description;
+        assignment.Deadline = dto.Deadline; 
+        assignment.MaxMarks = dto.MaxMarks;
+        assignment.SubjectId = dto.SubjectId;
+        assignment.IsPublished = dto.IsPublished;
+
+        await _context.SaveChangesAsync();
+        return Ok(assignment);
+    }
+
+    //Delete -----------------------|
+    [HttpDelete("{id}")]
+public async Task<IActionResult> DeleteAssignment(int id)
+{
+    var assignment = await _context.Assignments
+        .Include(a => a.Submissions) // সাথে সাবমিশনগুলো অন্তর্ভুক্ত করুন
+        .FirstOrDefaultAsync(a => a.Id == id);
+
+    if (assignment == null) return NotFound();
+
+    _context.Submissions.RemoveRange(assignment.Submissions); // আগে সাবমিশন ডিলিট
+    _context.Assignments.Remove(assignment); // তারপর অ্যাসাইনমেন্ট ডিলিট
+    await _context.SaveChangesAsync();
+
+    return Ok(new { message = "Assignment deleted successfully" });
+}
+
 }

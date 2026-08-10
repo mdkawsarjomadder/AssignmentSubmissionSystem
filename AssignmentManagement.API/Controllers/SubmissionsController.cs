@@ -20,7 +20,7 @@ public class SubmissionsController : ControllerBase
         _context = context;
     }
 
-    // 🔴 Helper Method: Token থেকে Safe-ভাবে User ID পাওয়ার জন্য
+    // 🔴 Helper Method: Token থেকে Safe-ভাবে User ID পাওয়ার জন্য
     private int? GetCurrentUserId()
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) 
@@ -49,6 +49,21 @@ public class SubmissionsController : ControllerBase
             .ToListAsync();
 
         return Ok(subjects);
+    }
+
+   [HttpGet("classes")]
+    public IActionResult GetClasses()
+    {
+        var classes = new[]
+        {
+            new { Id = 1, Name = "Class 8" },
+            new { Id = 2, Name = "Class 9" },
+            new { Id = 3, Name = "Class 10" },
+            new { Id = 4, Name = "Class 11" },
+            new { Id = 5, Name = "Class 12" }
+        };
+
+        return Ok(classes);
     }
 
     // 1. GET SUBMISSIONS BY ASSIGNMENT ID (Teacher & Admin Only)
@@ -116,14 +131,15 @@ public class SubmissionsController : ControllerBase
                 Content = s.AnswerContent,
                 s.MarksObtained,
                 MaxMarks = s.Assignment.MaxMarks,
-                Feedback = s.Feedback
+                Feedback = s.Feedback,
+                Status = s.Status ?? "Submitted" // <--- Status added
             })
             .ToListAsync();
 
         return Ok(myGrades);
     }
 
-    // 3. SUBMIT ASSIGNMENT (Student Only - Clean Single Method)
+    // 3. SUBMIT ASSIGNMENT (Student Only)
     [HttpPost]
     [Authorize(Roles = "Student,2,3")]
     public async Task<IActionResult> SubmitAssignment([FromBody] SubmitAssignmentDto dto)
@@ -138,7 +154,7 @@ public class SubmissionsController : ControllerBase
             .FirstOrDefaultAsync(s => s.AssignmentId == dto.AssignmentId && s.StudentId == studentId.Value);
 
         if (existingSubmission != null)
-            return BadRequest("আপনি ইতিমধ্যে এই অ্যাসাইনমেন্টের উত্তর জমা দিয়েছেন!");
+            return BadRequest("আপনি ইতিমধ্যে এই অ্যাসাইনমেন্টের উত্তর জমা দিয়েছেন!");
 
         var submission = new Submission
         {
@@ -152,7 +168,7 @@ public class SubmissionsController : ControllerBase
         _context.Submissions.Add(submission);
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "অ্যাসাইনমেন্ট সফলভাবে জমা হয়েছে।" });
+        return Ok(new { message = "অ্যাসাইনমেন্ট সফলভাবে জমা হয়েছে।" });
     }
 
     // 4. GRADE SUBMISSION (Teacher & Admin Only)
@@ -178,7 +194,9 @@ public class SubmissionsController : ControllerBase
 
         submission.MarksObtained = dto.MarksObtained;
         submission.Feedback = dto.Feedback;
-        submission.Status = "Graded";
+        
+        // ডাইনামিকভাবে DTO থেকে স্ট্যাটাস আপডেট হবে (ফাঁকা থাকলে ডিফল্ট 'Graded' হবে)
+        submission.Status = string.IsNullOrWhiteSpace(dto.Status) ? "Graded" : dto.Status;
 
         await _context.SaveChangesAsync();
         return Ok("Submission graded successfully.");
@@ -204,7 +222,8 @@ public class SubmissionsController : ControllerBase
                 Content = s.AnswerContent,
                 s.SubmittedAt,
                 s.MarksObtained,
-                s.Feedback
+                s.Feedback,
+                Status = s.Status ?? "Submitted" // <--- Status added
             })
             .ToListAsync();
 
