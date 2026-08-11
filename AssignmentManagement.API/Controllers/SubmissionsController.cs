@@ -5,6 +5,8 @@ using AssignmentManagement.API.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using YourProjectName.DTOs;
 
 namespace AssignmentManagement.API.Controllers;
 
@@ -56,11 +58,13 @@ public class SubmissionsController : ControllerBase
     {
         var classes = new[]
         {
-            new { Id = 1, Name = "Class 8" },
-            new { Id = 2, Name = "Class 9" },
-            new { Id = 3, Name = "Class 10" },
-            new { Id = 4, Name = "Class 11" },
-            new { Id = 5, Name = "Class 12" }
+            new { Id = 1, Name = "Class 6" },
+            new { Id = 2, Name = "Class 7" },
+            new { Id = 3, Name = "Class 8" },
+            new { Id = 4, Name = "Class 9" },
+            new { Id = 5, Name = "Class 10" },
+            new { Id = 6, Name = "Class 11" },
+            new { Id = 7, Name = "Class 12" }
         };
 
         return Ok(classes);
@@ -229,4 +233,89 @@ public class SubmissionsController : ControllerBase
 
         return Ok(submissions);
     }
-}
+
+  //Notification in a create ----------|
+  [HttpPost]
+    public async Task<IActionResult> SubmitAssignment([FromForm] SubmissionDto dto)
+    {
+        string? filePath = null;
+        if (dto.File != null && dto.File.Length > 0)
+        {
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.File.FileName;
+            filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await dto.File.CopyToAsync(stream);
+            }
+            filePath = $"/uploads/{uniqueFileName}"; // DB-তে সেভ করার লিঙ্ক
+        }
+        // Database operation here...
+
+        return Ok(new { message = "Submitted successfully" });
+    } 
+    // 👉 PUT: api/Submissions (Resubmit / Update Work)
+        [HttpPut]
+        public async Task<IActionResult> UpdateSubmission([FromForm] int assignmentId, [FromForm] string answerContent, IFormFile? file)
+        {
+            // ১. JWT টোকেন থেকে স্টুডেন্ট আইডি বের করা
+            var studentIdClaim = User.FindFirst("id")?.Value 
+                              ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(studentIdClaim) || !int.TryParse(studentIdClaim, out int studentId))
+            {
+                return Unauthorized(new { message = "ইউজার সনাক্ত করা যায়নি।" });
+            }
+
+            // ২. সাবমিশন এবং সাথে থাকা অ্যাসাইনমেন্ট ডেটা খুঁজে বের করা
+            var existingSubmission = await _context.Submissions
+                .Include(s => s.Assignment)
+                .FirstOrDefaultAsync(s => s.AssignmentId == assignmentId && s.StudentId == studentId);
+
+            if (existingSubmission == null)
+            {
+                return NotFound(new { message = "পূর্বে কোনো সাবমিশন পাওয়া যায়নি।" });
+            }
+
+            // ৩. Deadline ফিল্ড চেক করা (Assignment Entity অনুযায়ী)
+            if (existingSubmission.Assignment != null && existingSubmission.Assignment.Deadline < DateTime.UtcNow)
+            {
+                return BadRequest(new { message = "অ্যাসাইনমেন্টের ডেডলাইন শেষ হয়ে গেছে, উত্তর পরিবর্তন সম্ভব নয়।" });
+            }
+
+            // ৪. উত্তর ও সাবমিশন টাইম আপডেট
+            existingSubmission.AnswerContent = answerContent ?? string.Empty;
+            existingSubmission.SubmittedAt = DateTime.UtcNow;
+
+            // ৫. নতুন ফাইল আপলোড হলে পুরনো ফাইল রিপ্লেস করা
+            if (file != null && file.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                existingSubmission.FilePath = $"/uploads/{uniqueFileName}";
+            }
+
+            // database আপডেট
+            _context.Submissions.Update(existingSubmission);
+                await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Submission updated successfully!" });
+        }
+    }
+    

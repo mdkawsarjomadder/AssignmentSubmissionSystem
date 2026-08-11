@@ -4,6 +4,7 @@
     {
         public int Id { get; set; }
         public string AnswerContent { get; set; } = string.Empty;
+        public string? FilePath { get; set; } // 👉 ফাইল পাথের জন্য এই লাইনটি যোগ করুন
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
         public decimal? MarksObtained { get; set; }
         public string? Feedback { get; set; }
