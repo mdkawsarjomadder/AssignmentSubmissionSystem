@@ -62,6 +62,12 @@ function TeacherDashboard() {
   const [assignmentClassId, setAssignmentClassId] = useState<number | "">("");
   const [assignmentIsPublished, setAssignmentIsPublished] = useState(false);
 
+  // Search & Filter States
+  const [assignmentSearch, setAssignmentSearch] = useState("");
+  const [selectedClassFilter, setSelectedClassFilter] = useState<number | "">("");
+  const [submissionSearch, setSubmissionSearch] = useState("");
+  const [submissionStatusFilter, setSubmissionStatusFilter] = useState("");
+
   // Grading & Status Form State
   const [marksObtained, setMarksObtained] = useState<number>(0);
   const [feedback, setFeedback] = useState("");
@@ -276,8 +282,45 @@ function TeacherDashboard() {
     }
   };
 
+  // Stats Calculation
+  const totalAssignments = assignments.length;
+  const publishedAssignments = assignments.filter((a) => a.isPublished).length;
+  const totalSubmissions = submissions.length;
+  const pendingGrading = submissions.filter((s) => s.status !== "Graded").length;
+
+  // Filtered Assignments Logic
+  const filteredAssignments = assignments.filter((item) => {
+    const matchesSearch = item.title.toLowerCase().includes(assignmentSearch.toLowerCase());
+    const matchesClass = selectedClassFilter === "" || item.classId === Number(selectedClassFilter);
+    return matchesSearch && matchesClass;
+  });
+
+  // Filtered Submissions Logic
+  const filteredSubmissions = submissions.filter((sub) => {
+    const matchesSearch =
+      sub.studentName.toLowerCase().includes(submissionSearch.toLowerCase()) ||
+      sub.studentEmail.toLowerCase().includes(submissionSearch.toLowerCase());
+    const matchesStatus =
+      submissionStatusFilter === "" ||
+      (submissionStatusFilter === "Pending" ? sub.status !== "Graded" : sub.status === submissionStatusFilter);
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="min-h-screen bg-slate-950 text-white p-6 relative">
+      {/* Toast Alert Notification */}
+      {toastMessage && (
+        <div
+          className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-xl border shadow-lg text-sm transition-all duration-300 ${
+            toastType === "success"
+              ? "bg-emerald-950 border-emerald-800 text-emerald-200"
+              : "bg-rose-950 border-rose-800 text-rose-200"
+          }`}
+        >
+          {toastMessage}
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -295,14 +338,99 @@ function TeacherDashboard() {
           </button>
         </div>
 
+        {/* Summary Analytics Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center gap-3.5 shadow-sm">
+            <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Total Assignments</p>
+              <h4 className="text-xl font-bold text-white mt-0.5">{totalAssignments}</h4>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center gap-3.5 shadow-sm">
+            <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Published</p>
+              <h4 className="text-xl font-bold text-white mt-0.5">{publishedAssignments}</h4>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center gap-3.5 shadow-sm">
+            <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Submissions</p>
+              <h4 className="text-xl font-bold text-white mt-0.5">
+                {selectedAssignmentId ? totalSubmissions : "-"}
+              </h4>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center gap-3.5 shadow-sm">
+            <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Pending Grading</p>
+              <h4 className="text-xl font-bold text-white mt-0.5">
+                {selectedAssignmentId ? pendingGrading : "-"}
+              </h4>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Assignments List */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-            <h2 className="font-semibold text-lg mb-4 text-slate-200">
-              Assignments ({assignments.length})
+            <h2 className="font-semibold text-lg mb-3 text-slate-200">
+              Assignments ({filteredAssignments.length})
             </h2>
-            <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
-              {assignments.map((item) => (
+
+            {/* Assignments Search & Filter */}
+            <div className="space-y-2 mb-4">
+              <input
+                type="text"
+                placeholder="Search assignment..."
+                value={assignmentSearch}
+                onChange={(e) => setAssignmentSearch(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+              />
+              <select
+                value={selectedClassFilter}
+                onChange={(e) => setSelectedClassFilter(e.target.value === "" ? "" : Number(e.target.value))}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 cursor-pointer transition"
+              >
+                <option value="">All Classes</option>
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+              {filteredAssignments.map((item) => (
                 <div
                   key={item.id}
                   onClick={() => handleSelectAssignment(item.id)}
@@ -313,7 +441,7 @@ function TeacherDashboard() {
                   }`}
                 >
                   <div className="flex justify-between items-start gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-base text-slate-100 pr-1 leading-snug">
                         {item.title}
                       </h3>
@@ -328,36 +456,30 @@ function TeacherDashboard() {
                       )}
                     </div>
 
-                
-             
-{/* Modern Action Buttons with Larger Touch/Click Area */}
-<div className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1.5 shrink-0 -mt-1">
-  <button
-    onClick={(e) => handleOpenEditModal(item, e)}
-    title="Edit Assignment"
-    className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition cursor-pointer"
-  >
-    {/* Size: w-5 h-5 */}
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-    </svg>
-  </button>
+                    {/* Edit / Delete Buttons */}
+                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={(e) => handleOpenEditModal(item, e)}
+                        title="Edit Assignment"
+                        className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                      </button>
 
-  <button
-    onClick={(e) => handleDeleteAssignment(item.id, e)}
-    title="Delete Assignment"
-    className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-  >
-    {/* Size: w-5 h-5 */}
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="3 6 5 6 21 6"></polyline>
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-      <line x1="10" y1="11" x2="10" y2="17"></line>
-      <line x1="14" y1="11" x2="14" y2="17"></line>
-    </svg>
-  </button>
-</div>
+                      <button
+                        onClick={(e) => handleDeleteAssignment(item.id, e)}
+                        title="Delete Assignment"
+                        className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   <p className="text-slate-400 text-xs mt-2">
@@ -372,12 +494,36 @@ function TeacherDashboard() {
             </div>
           </div>
 
-          {/* Submissions List */}
+          {/* Submissions List Section */}
           <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4">
             <h2 className="font-semibold text-lg mb-4 text-slate-200">
               Student Submissions{" "}
               {selectedAssignmentId ? `(#${selectedAssignmentId})` : ""}
             </h2>
+
+            {/* Submissions Search & Filter Bar */}
+            {selectedAssignmentId && (
+              <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <input
+                  type="text"
+                  placeholder="Search student by name or email..."
+                  value={submissionSearch}
+                  onChange={(e) => setSubmissionSearch(e.target.value)}
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                />
+                <select
+                  value={submissionStatusFilter}
+                  onChange={(e) => setSubmissionStatusFilter(e.target.value)}
+                  className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 cursor-pointer transition"
+                >
+                  <option value="">All Status</option>
+                  <option value="Graded">Graded</option>
+                  <option value="Pending">Pending Evaluation</option>
+                  <option value="Resubmit Requested">Resubmit Requested</option>
+                  <option value="Late Submission">Late Submission</option>
+                </select>
+              </div>
+            )}
 
             {!selectedAssignmentId ? (
               <p className="text-slate-500 text-sm py-10 text-center">
@@ -387,9 +533,9 @@ function TeacherDashboard() {
               <p className="text-slate-400 text-sm py-10 text-center">
                 লোডিং সাবমিশনস...
               </p>
-            ) : submissions.length === 0 ? (
+            ) : filteredSubmissions.length === 0 ? (
               <p className="text-slate-500 text-sm py-10 text-center">
-                এখনো কোনো স্টুডেন্ট উত্তর জমা দেয়নি
+                কোনো সাবমিশন পাওয়া যায়নি
               </p>
             ) : (
               <div className="overflow-x-auto">
@@ -403,15 +549,11 @@ function TeacherDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
-                    {submissions.map((sub) => (
+                    {filteredSubmissions.map((sub) => (
                       <tr key={sub.id} className="hover:bg-slate-800/30">
                         <td className="p-3">
-                          <div className="font-medium text-white">
-                            {sub.studentName}
-                          </div>
-                          <div className="text-xs text-slate-500">
-                            {sub.studentEmail}
-                          </div>
+                          <div className="font-medium text-white">{sub.studentName}</div>
+                          <div className="text-xs text-slate-500">{sub.studentEmail}</div>
                         </td>
                         <td className="p-3 text-xs">
                           {new Date(sub.submittedAt).toLocaleDateString()}
@@ -554,10 +696,7 @@ function TeacherDashboard() {
                     onChange={(e) => setAssignmentIsPublished(e.target.checked)}
                     className="w-4 h-4 rounded accent-indigo-600 bg-slate-950 border-slate-800 cursor-pointer"
                   />
-                  <label
-                    htmlFor="isPublished"
-                    className="text-slate-300 font-medium cursor-pointer text-sm"
-                  >
+                  <label htmlFor="isPublished" className="text-slate-300 font-medium cursor-pointer text-sm">
                     Publish Assignment immediately
                   </label>
                 </div>
@@ -572,7 +711,7 @@ function TeacherDashboard() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold shadow-lg shadow-indigo-600/20 transition cursor-pointer"
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition cursor-pointer shadow-lg shadow-indigo-600/20"
                   >
                     {editingAssignment ? "Update Assignment" : "Save Assignment"}
                   </button>
@@ -582,95 +721,84 @@ function TeacherDashboard() {
           </div>
         )}
 
-        {/* Modal: Grade Submission */}
+        {/* Modal: Grade / Evaluate Submission */}
         {selectedSubmission && (
           <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 z-50">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
-                <h3 className="text-lg font-bold">Grade & Change Status</h3>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-7 w-full max-w-lg shadow-2xl">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-white">Evaluate Submission</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">{selectedSubmission.studentName}</p>
+                </div>
                 <button
                   onClick={() => setSelectedSubmission(null)}
-                  className="text-slate-400 hover:text-white"
+                  className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
                 >
                   ✕
                 </button>
               </div>
 
-              <div className="mb-4">
-                <span className="text-xs text-slate-400">Student Answer:</span>
-                <p className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-sm text-slate-300 mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap">
-                  {selectedSubmission.content}
-                </p>
+              <div className="mb-4 bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
+                <p className="text-xs text-slate-400 font-medium mb-1">Student Answer Content:</p>
+                <div className="text-sm text-slate-200 max-h-32 overflow-y-auto whitespace-pre-wrap">
+                  {selectedSubmission.content || "No content provided."}
+                </div>
               </div>
 
               <form onSubmit={handleGradeSubmission} className="space-y-4 text-sm">
-                <div>
-                  <label className="block text-slate-300 font-medium mb-1">Submission Status</label>
-                  <select
-                    value={submissionStatus}
-                    onChange={(e) => setSubmissionStatus(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white cursor-pointer"
-                  >
-                    <option value="Graded">Graded (মূল্যায়ন সম্পন্ন)</option>
-                    <option value="Submitted">Submitted (মূল্যায়ন বাকি)</option>
-                    <option value="Resubmit Requested">Resubmit Requested (পুনরায় জমা দিতে বলা হয়েছে)</option>
-                    <option value="Late Submission">Late Submission (বিলম্বে জমা পড়েছে)</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-300 font-medium mb-1">Marks Obtained</label>
+                    <input
+                      type="number"
+                      required
+                      value={marksObtained}
+                      onChange={(e) => setMarksObtained(Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-medium mb-1">Status</label>
+                    <select
+                      value={submissionStatus}
+                      onChange={(e) => setSubmissionStatus(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 transition cursor-pointer"
+                    >
+                      <option value="Graded">Graded</option>
+                      <option value="Resubmit Requested">Resubmit Requested</option>
+                      <option value="Late Submission">Late Submission</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-medium mb-1">Marks Obtained</label>
-                  <input
-                    type="number"
-                    required
-                    value={marksObtained}
-                    onChange={(e) => setMarksObtained(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-300 font-medium mb-1">Feedback</label>
+                  <label className="block text-slate-300 font-medium mb-1">Teacher Feedback</label>
                   <textarea
                     rows={3}
+                    placeholder="স্টুডেন্টের কাজের উপর মন্তব্য লিখুন..."
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    placeholder="স্টুডেন্টকে সুনির্দিষ্ট ফিডব্যাক দিন..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white resize-none"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 transition resize-none"
                   ></textarea>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-2">
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
                   <button
                     type="button"
                     onClick={() => setSelectedSubmission(null)}
-                    className="px-4 py-2 bg-slate-800 rounded-xl text-slate-300"
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-medium transition cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-medium text-white shadow-lg shadow-emerald-600/20"
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition cursor-pointer shadow-lg shadow-indigo-600/20"
                   >
-                    Save Changes
+                    Save Grade
                   </button>
                 </div>
               </form>
             </div>
-          </div>
-        )}
-
-        {/* Toast Alert */}
-        {toastMessage && (
-          <div
-            className={`fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl shadow-lg border transition-all duration-300 flex items-center gap-2 text-sm font-medium ${
-              toastType === "success"
-                ? "bg-emerald-950 border-emerald-500 text-emerald-200"
-                : "bg-rose-950 border-rose-500 text-rose-200"
-            }`}
-          >
-            <span>{toastType === "success" ? "✅" : "⚠️"}</span>
-            <span>{toastMessage}</span>
           </div>
         )}
       </div>
@@ -678,10 +806,4 @@ function TeacherDashboard() {
   );
 }
 
-export default function TeacherDashboardPage() {
-  return (
-    <ProtectedRoute allowedRole="Teacher">
-      <TeacherDashboard />
-    </ProtectedRoute>
-  );
-}
+export default TeacherDashboard;

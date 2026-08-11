@@ -28,29 +28,37 @@ interface GradeInfo {
   feedback: string;
 }
 
-
- function StudentDashboard() {
+function StudentDashboard() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [myGrades, setMyGrades] = useState<GradeInfo[]>([]);
   const [selectedGrade, setSelectedGrade] = useState<GradeInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(''); // 🔴 Fixed: 'error' state added
+  const [error, setError] = useState('');
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('All');
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'completed'>('all');
 
-  // Submit Modal State
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  // Submit & Edit Modal State
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [submissionContent, setSubmissionContent] = useState('');
-  const [fileUrl, setFileUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isEditing, setIsEditing] = useState(false); // Resubmit Tracker
   const [submitting, setSubmitting] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedSubject, activeTab]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -71,37 +79,49 @@ interface GradeInfo {
 
       const rawAssignments = assignmentsRes.data.data || assignmentsRes.data || [];
       const updatedAssignments = (Array.isArray(rawAssignments) ? rawAssignments : []).map(
-        (a: Assignment) => ({
-          ...a,
-          isSubmitted: a.isSubmitted || submittedTitles.has(a.title),
-        })
+        (a: Assignment) => {
+          const defaultDate = new Date();
+          defaultDate.setDate(defaultDate.getDate() + 7);
+
+          const finalDueDate = a.dueDate || a.deadline || defaultDate.toISOString();
+
+          return {
+            ...a,
+            dueDate: finalDueDate,
+            isSubmitted: a.isSubmitted || submittedTitles.has(a.title),
+          };
+        }
       );
 
       setAssignments(updatedAssignments);
     } catch (err: any) {
       console.error('Failed to load dashboard data:', err.response?.data || err.message);
-      setError(err.response?.data?.message || 'ডাটা লোড করতে সমস্যা হয়েছে।');
+      setError(err.response?.data?.message || 'ডাটা লোড করতে সমস্যা হয়েছে।');
     } finally {
       setLoading(false);
     }
   };
 
-const formatDate = (dateString: any) => {
-  if (!dateString) return "No Due Date";
-  const parsedDate = new Date(dateString);
-  if (isNaN(parsedDate.getTime()) || parsedDate.getFullYear() <= 1) {
-    return "No Due Date";
-  }
-  return parsedDate.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
-};
+  const formatDate = (dateString: any) => {
+    if (!dateString) return "No Due Date";
+    const parsedDate = new Date(dateString);
+    if (isNaN(parsedDate.getTime()) || parsedDate.getFullYear() <= 1970) {
+      return "No Due Date";
+    }
+    return parsedDate.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
 
   const isOverdue = (dateString?: string) => {
     if (!dateString) return false;
-    return new Date(dateString) < new Date();
+    const parsedDate = new Date(dateString);
+    if (isNaN(parsedDate.getTime()) || parsedDate.getFullYear() <= 1970) {
+      return false;
+    }
+    return parsedDate < new Date();
   };
 
   const handleLogout = () => {
@@ -110,30 +130,59 @@ const formatDate = (dateString: any) => {
     window.location.href = '/login';
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        setModalMessage('error:ফাইল সাইজ সর্বোচ্চ 5MB হতে পারবে!');
+        return;
+      }
+      setSelectedFile(file);
+      setModalMessage('');
+    }
+  };
+
+  // Submit / Resubmit Handler
   const handleSubmitAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAssignment) return;
+
+    if (!submissionContent.trim() && !selectedFile) {
+      setModalMessage('error:অনুগ্রহ করে উত্তর অথবা ফাইল যেকোনো একটি প্রদান করুন!');
+      return;
+    }
+
+    const due = selectedAssignment.dueDate || selectedAssignment.deadline;
+    if (isOverdue(due)) {
+      setModalMessage('error:সাময়িক দুঃখিত! এই অ্যাসাইনমেন্টের ডেডলাইন পার হয়ে গেছে।');
+      return;
+    }
+
     setSubmitting(true);
     setModalMessage('');
 
     try {
       const token = getAuthToken() || localStorage.getItem('token');
 
-      const fullAnswer = fileUrl
-        ? `${submissionContent}\n\nAttached File: ${fileUrl}`
-        : submissionContent;
+      const formData = new FormData();
+      formData.append('assignmentId', selectedAssignment.id.toString());
+      formData.append('answerContent', submissionContent);
+      if (selectedFile) formData.append('file', selectedFile);
 
-      const payload = {
-        assignmentId: selectedAssignment.id,
-        answerContent: fullAnswer,
+      // API Endpoint (PUT for Update/Resubmit, POST for New Submission)
+      const url = 'http://localhost:5074/api/Submissions';
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
       };
 
-      await axios.post('http://localhost:5074/api/Submissions', payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      if (isEditing) {
+        await axios.put(url, formData, { headers });
+        setModalMessage('success:Submission Updated Successfully!');
+      } else {
+        await axios.post(url, formData, { headers });
+        setModalMessage('success:Assignment Submitted Successfully!');
+      }
 
       setAssignments((prev) =>
         prev.map((item) =>
@@ -141,23 +190,33 @@ const formatDate = (dateString: any) => {
         )
       );
 
-      setModalMessage('অ্যাসাইনমেন্ট সফলভাবে সাবমিট হয়েছে!');
       setSubmissionContent('');
-      setFileUrl('');
+      setSelectedFile(null);
+      setIsEditing(false);
+
       setTimeout(() => {
         setSelectedAssignment(null);
         setModalMessage('');
-      }, 1200);
+        fetchDashboardData();
+      }, 1500);
+
     } catch (err: any) {
-      setModalMessage(
-        err.response?.data?.message || err.response?.data || 'সাবমিশনে সমস্যা হয়েছে।'
-      );
+      const errorMsg = err.response?.data?.message || err.response?.data || 'Submission Request Failed!';
+      console.error('Submission Error:', err);
+      setModalMessage(`error:${typeof errorMsg === 'string' ? errorMsg : 'Submission Request Failed!'}`);
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Search & Filter Logic
+  // Open Modal for Resubmit / Edit
+  const handleOpenResubmit = (assignment: Assignment, existingGrade?: GradeInfo) => {
+    setSelectedAssignment(assignment);
+    setIsEditing(true);
+    setSubmissionContent(existingGrade?.content || '');
+    setModalMessage('');
+  };
+
   const subjectsList = [
     'All',
     ...Array.from(new Set(assignments.map((a) => a.subjectName).filter(Boolean))),
@@ -177,6 +236,10 @@ const formatDate = (dateString: any) => {
     return matchesSearch && matchesSubject && matchesTab;
   });
 
+  const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentAssignments = filteredAssignments.slice(startIndex, startIndex + itemsPerPage);
+
   const totalCount = assignments.length;
   const completedCount = assignments.filter((a) => a.isSubmitted).length;
   const pendingCount = totalCount - completedCount;
@@ -192,19 +255,30 @@ const formatDate = (dateString: any) => {
               View available assignments, track progress, and submit work.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/student/grades"
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition"
-            >
-              My Grades & Feedback →
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 border border-rose-900/50 text-rose-400 hover:bg-rose-950/40 rounded-lg text-sm font-medium transition cursor-pointer"
-            >
-              Logout
-            </button>
+
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-3">
+              <Link
+                href="/student/profile"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-sm font-medium transition"
+              >
+                👤 Profile
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 border border-rose-900/50 text-rose-400 hover:bg-rose-950/40 rounded-lg text-sm font-medium transition cursor-pointer"
+              >
+                Logout
+              </button>
+            </div>
+            <div>
+              <Link
+                href="/student/grades"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition block"
+              >
+                My Grades & Feedback →
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -237,7 +311,6 @@ const formatDate = (dateString: any) => {
 
         {/* Filter Bar */}
         <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center bg-slate-900 p-4 rounded-xl border border-slate-800">
-          {/* Tabs */}
           <div className="flex gap-2 bg-slate-950 p-1 rounded-lg border border-slate-800/80">
             {(['all', 'pending', 'completed'] as const).map((tab) => (
               <button
@@ -254,7 +327,6 @@ const formatDate = (dateString: any) => {
             ))}
           </div>
 
-          {/* Search & Subject Filter */}
           <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
@@ -279,103 +351,185 @@ const formatDate = (dateString: any) => {
           </div>
         </div>
 
-        {/* Cards Section */}
+        {/* Main Section */}
         {loading ? (
-          <div className="p-8 text-center text-slate-400 bg-slate-900 rounded-xl border border-slate-800">
-            Loading assignments...
+          <div className="p-12 text-center text-slate-400 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
+            <div className="animate-spin text-3xl">⏳</div>
+            <p className="text-sm">Loading assignments...</p>
           </div>
         ) : error ? (
-          <div className="p-8 text-center text-red-400 bg-slate-900 rounded-xl border border-slate-800">
+          <div className="p-8 text-center text-red-400 bg-slate-900 rounded-2xl border border-slate-800">
             {error}
           </div>
         ) : filteredAssignments.length === 0 ? (
-          <div className="p-8 text-center text-slate-400 bg-slate-900 rounded-xl border border-slate-800">
-            No assignments found.
+          <div className="p-12 text-center bg-slate-900 rounded-2xl border border-slate-800 flex flex-col items-center justify-center space-y-4">
+            <div className="w-20 h-20 bg-slate-800/60 rounded-full flex items-center justify-center border border-slate-700/50">
+              <span className="text-4xl">📂</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-slate-200">No Assignments Found</h3>
+              <p className="text-xs text-slate-400 max-w-sm">
+                There are no assignments matching your current filter criteria or search query.
+              </p>
+            </div>
+            {(searchQuery || selectedSubject !== 'All' || activeTab !== 'all') && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedSubject('All');
+                  setActiveTab('all');
+                }}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded-lg text-xs font-semibold border border-slate-700 transition"
+              >
+                Reset Filters
+              </button>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAssignments.map((assignment) => {
-              const due = assignment.deadline || assignment.dueDate;
-              const overdue = !assignment.isSubmitted && isOverdue(due);
-              const gradeInfo = myGrades.find((g) => g.assignmentTitle === assignment.title);
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentAssignments.map((assignment) => {
+                const due = assignment.dueDate || assignment.deadline;
+                const overdue = isOverdue(due);
+                const gradeInfo = myGrades.find((g) => g.assignmentTitle === assignment.title);
 
-              return (
-                <div
-                  key={assignment.id}
-                  className="p-6 bg-slate-900 border border-slate-800 rounded-xl flex flex-col justify-between space-y-4 hover:border-slate-700 transition"
-                >
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-md text-xs font-semibold">
-                        {assignment.subjectName || 'General'}
-                      </span>
+                return (
+                  <div
+                    key={assignment.id}
+                    className="p-6 bg-slate-900 border border-slate-800 rounded-xl flex flex-col justify-between space-y-4 hover:border-slate-700 transition"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-md text-xs font-semibold">
+                          {assignment.subjectName || 'General'}
+                        </span>
+
+                        {assignment.isSubmitted ? (
+                          <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-xs font-semibold">
+                            ✓ Submitted
+                          </span>
+                        ) : overdue ? (
+                          <span className="px-2.5 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-md text-xs font-semibold">
+                            Overdue
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md text-xs font-semibold">
+                            Pending
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="text-xl font-semibold text-white">{assignment.title}</h3>
+                      <p className="text-slate-400 text-sm line-clamp-2">{assignment.description}</p>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-800/80 space-y-3">
+                      <div className="flex justify-between items-center text-xs text-slate-400">
+                        <span>Max Marks: {assignment.maxMarks}</span>
+                        <span className={overdue ? 'text-rose-400 font-semibold' : ''}>
+                          Due: {formatDate(due)}
+                        </span>
+                      </div>
 
                       {assignment.isSubmitted ? (
-                        <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-xs font-semibold">
-                          ✓ Submitted
-                        </span>
-                      ) : overdue ? (
-                        <span className="px-2.5 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-md text-xs font-semibold">
-                          Overdue
-                        </span>
+                        <div className="space-y-2">
+                          {gradeInfo && (
+                            <button
+                              onClick={() => setSelectedGrade(gradeInfo)}
+                              className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded-lg text-xs font-medium transition cursor-pointer"
+                            >
+                              View Result / Feedback
+                            </button>
+                          )}
+
+                          {/* 👉 Resubmit / Edit Option (If Not Overdue) */}
+                          {!overdue ? (
+                            <button
+                              onClick={() => handleOpenResubmit(assignment, gradeInfo)}
+                              className="w-full py-2 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-medium transition cursor-pointer"
+                            >
+                              ✏️ Edit / Resubmit Work
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="w-full py-2 bg-slate-800/50 text-slate-500 rounded-lg text-xs font-medium cursor-not-allowed border border-slate-800"
+                            >
+                              Submission Closed (Overdue)
+                            </button>
+                          )}
+                        </div>
                       ) : (
-                        <span className="px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md text-xs font-semibold">
-                          Pending
-                        </span>
+                        <button
+                          onClick={() => {
+                            setSelectedAssignment(assignment);
+                            setIsEditing(false);
+                            setSubmissionContent('');
+                          }}
+                          disabled={overdue}
+                          className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {overdue ? 'Deadline Passed' : 'Submit Assignment'}
+                        </button>
                       )}
                     </div>
-
-                    <h3 className="text-xl font-semibold text-white">{assignment.title}</h3>
-                    <p className="text-slate-400 text-sm line-clamp-2">{assignment.description}</p>
                   </div>
+                );
+              })}
+            </div>
 
-                  <div className="pt-4 border-t border-slate-800/80 space-y-4">
-                    <div className="flex justify-between items-center text-xs text-slate-400">
-                      <span>Max Marks: {assignment.maxMarks}</span>
-                      <span className={overdue ? 'text-rose-400 font-semibold' : ''}>
-                        Due: {formatDate(due)}
-                      </span>
-                    </div>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-between items-center pt-4 border-t border-slate-800/80">
+                <p className="text-xs text-slate-400">
+                  Showing <span className="font-semibold text-white">{startIndex + 1}</span> to{' '}
+                  <span className="font-semibold text-white">
+                    {Math.min(startIndex + itemsPerPage, filteredAssignments.length)}
+                  </span>{' '}
+                  of <span className="font-semibold text-white">{filteredAssignments.length}</span> assignments
+                </p>
 
-                    {assignment.isSubmitted ? (
-                      gradeInfo ? (
-                        <button
-                          onClick={() => setSelectedGrade(gradeInfo)}
-                          className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded-lg text-xs font-medium transition cursor-pointer"
-                        >
-                          View Result / Feedback
-                        </button>
-                      ) : (
-                        <button
-                          disabled
-                          className="w-full py-2 bg-slate-800 text-slate-500 rounded-lg text-sm font-medium cursor-not-allowed border border-slate-700"
-                        >
-                          Already Submitted
-                        </button>
-                      )
-                    ) : (
-                      <button
-                        onClick={() => setSelectedAssignment(assignment)}
-                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition cursor-pointer"
-                      >
-                        Submit Assignment
-                      </button>
-                    )}
-                  </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    ← Prev
+                  </button>
+
+                  <span className="text-xs font-semibold text-slate-400 px-2">
+                    {currentPage} / {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    Next →
+                  </button>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            )}
+          </>
         )}
 
-        {/* Submit Modal */}
+        {/* Submit / Resubmit Modal */}
         {selectedAssignment && (
           <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 className="text-lg font-bold">Submit: {selectedAssignment.title}</h3>
+                <h3 className="text-lg font-bold">
+                  {isEditing ? 'Resubmit Work:' : 'Submit Work:'} {selectedAssignment.title}
+                </h3>
                 <button
-                  onClick={() => setSelectedAssignment(null)}
+                  onClick={() => {
+                    setSelectedAssignment(null);
+                    setModalMessage('');
+                    setSelectedFile(null);
+                    setIsEditing(false);
+                  }}
                   className="text-slate-400 hover:text-white transition cursor-pointer"
                 >
                   ✕
@@ -383,8 +537,15 @@ const formatDate = (dateString: any) => {
               </div>
 
               {modalMessage && (
-                <div className="p-3 bg-slate-800 text-indigo-300 text-xs rounded-xl border border-indigo-900">
-                  {modalMessage}
+                <div
+                  className={`p-3 text-xs font-semibold rounded-xl border flex items-center gap-2 ${
+                    modalMessage.startsWith('success:')
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                      : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                  }`}
+                >
+                  <span>{modalMessage.startsWith('success:') ? '✅' : '❌'}</span>
+                  <span>{modalMessage.replace(/^(success:|error:)/, '')}</span>
                 </div>
               )}
 
@@ -395,7 +556,6 @@ const formatDate = (dateString: any) => {
                   </label>
                   <textarea
                     rows={4}
-                    required
                     value={submissionContent}
                     onChange={(e) => setSubmissionContent(e.target.value)}
                     placeholder="Write your main answer or explanation here..."
@@ -405,21 +565,30 @@ const formatDate = (dateString: any) => {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Attachment Link (Google Drive / GitHub / File URL)
+                    Upload Document/Image File {isEditing && '(Optional: replaces previous file)'}
                   </label>
                   <input
-                    type="url"
-                    value={fileUrl}
-                    onChange={(e) => setFileUrl(e.target.value)}
-                    placeholder="https://drive.google.com/your-file-link"
-                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500 transition"
+                    type="file"
+                    accept=".pdf, .png, .jpg, .jpeg"
+                    onChange={handleFileChange}
+                    className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer bg-slate-950 border border-slate-800 rounded-xl p-1"
                   />
+                  {selectedFile && (
+                    <p className="text-xs text-emerald-400 mt-1">
+                      Selected: {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => setSelectedAssignment(null)}
+                    onClick={() => {
+                      setSelectedAssignment(null);
+                      setModalMessage('');
+                      setSelectedFile(null);
+                      setIsEditing(false);
+                    }}
                     className="w-1/2 py-2.5 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition cursor-pointer"
                   >
                     Cancel
@@ -427,9 +596,11 @@ const formatDate = (dateString: any) => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition cursor-pointer"
+                    className={`w-1/2 py-2.5 text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition cursor-pointer ${
+                      isEditing ? 'bg-amber-600 hover:bg-amber-500' : 'bg-emerald-600 hover:bg-emerald-500'
+                    }`}
                   >
-                    {submitting ? 'Submitting...' : 'Confirm Submit'}
+                    {submitting ? 'Updating...' : isEditing ? 'Confirm Resubmit' : 'Confirm Submit'}
                   </button>
                 </div>
               </form>
@@ -505,7 +676,6 @@ const formatDate = (dateString: any) => {
     </div>
   );
 }
-
 
 export default function StudentDashboardPage() {
   return (
