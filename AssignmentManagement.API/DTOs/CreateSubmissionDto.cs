@@ -9,5 +9,6 @@ namespace AssignmentManagement.API.DTOs
     {
         public int AssignmentId { get; set; }
         public string AnswerContent { get; set; } = string.Empty;
+        public IFormFile? File { get; set; }
     }
 }

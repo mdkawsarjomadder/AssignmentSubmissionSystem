@@ -5,10 +5,16 @@ using AssignmentManagement.API.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
-using YourProjectName.DTOs;
 
 namespace AssignmentManagement.API.Controllers;
+
+// DTO Class for File and Form Data Handling
+public class CreateSubmissionDto
+{
+    public int AssignmentId { get; set; }
+    public string AnswerContent { get; set; } = string.Empty;
+    public IFormFile? File { get; set; }
+}
 
 [ApiController]
 [Route("api/[controller]")]
@@ -37,23 +43,21 @@ public class SubmissionsController : ControllerBase
         return null;
     }
 
-    // 0. GET SUBJECTS LIST (Teacher, Student & Admin)
+    // 0. GET SUBJECTS LIST
     [HttpGet("subjects")]
     [Authorize(Roles = "Teacher,Admin,Student,1,2,3")]
     public async Task<IActionResult> GetSubjects()
     {
         var subjects = await _context.Subjects
-            .Select(s => new
-            {
-                s.Id,
-                s.Name
-            })
+            .Select(s => new { s.Id, s.Name })
             .ToListAsync();
 
         return Ok(subjects);
     }
 
-   [HttpGet("classes")]
+    // 0.1 GET CLASSES LIST
+    [HttpGet("classes")]
+    [AllowAnonymous] // ফ্রন্টএন্ড সহজে এক্সেস করার জন্য
     public IActionResult GetClasses()
     {
         var classes = new[]
@@ -95,6 +99,7 @@ public class SubmissionsController : ControllerBase
                 StudentEmail = s.Student.Email ?? "",
                 s.SubmittedAt,
                 Content = s.AnswerContent ?? "",
+                s.FilePath,
                 s.MarksObtained,
                 Feedback = s.Feedback ?? "",
                 Status = s.Status ?? "Submitted"
@@ -117,9 +122,7 @@ public class SubmissionsController : ControllerBase
     public async Task<IActionResult> GetMyGrades()
     {
         var studentId = GetCurrentUserId();
-
-        if (studentId == null)
-            return Unauthorized("Invalid student token.");
+        if (studentId == null) return Unauthorized("Invalid student token.");
 
         var myGrades = await _context.Submissions
             .Where(s => s.StudentId == studentId.Value)
@@ -133,38 +136,64 @@ public class SubmissionsController : ControllerBase
                 SubjectName = s.Assignment.Subject != null ? s.Assignment.Subject.Name : "General",
                 s.SubmittedAt,
                 Content = s.AnswerContent,
+                s.FilePath,
                 s.MarksObtained,
                 MaxMarks = s.Assignment.MaxMarks,
                 Feedback = s.Feedback,
-                Status = s.Status ?? "Submitted" // <--- Status added
+                Status = s.Status ?? "Submitted"
             })
             .ToListAsync();
 
         return Ok(myGrades);
     }
 
-    // 3. SUBMIT ASSIGNMENT (Student Only)
+    // 3. POST: api/Submissions (Create / Submit Assignment)
     [HttpPost]
     [Authorize(Roles = "Student,2,3")]
-    public async Task<IActionResult> SubmitAssignment([FromBody] SubmitAssignmentDto dto)
+    public async Task<IActionResult> CreateSubmission([FromForm] CreateSubmissionDto dto)
     {
         var studentId = GetCurrentUserId();
-        if (studentId == null) return Unauthorized("Invalid token user identifier.");
+        if (studentId == null) return Unauthorized(new { message = "ইউজার সনাক্ত করা যায়নি।" });
 
         var assignment = await _context.Assignments.FindAsync(dto.AssignmentId);
-        if (assignment == null) return NotFound("Assignment not found.");
+        if (assignment == null) return NotFound(new { message = "অ্যাসাইনমেন্ট পাওয়া যায়নি।" });
+
+        if (assignment.Deadline < DateTime.UtcNow)
+        {
+            return BadRequest(new { message = "অ্যাসাইনমেন্টের ডেডলাইন শেষ হয়ে গেছে।" });
+        }
 
         var existingSubmission = await _context.Submissions
-            .FirstOrDefaultAsync(s => s.AssignmentId == dto.AssignmentId && s.StudentId == studentId.Value);
+            .AnyAsync(s => s.AssignmentId == dto.AssignmentId && s.StudentId == studentId.Value);
 
-        if (existingSubmission != null)
-            return BadRequest("আপনি ইতিমধ্যে এই অ্যাসাইনমেন্টের উত্তর জমা দিয়েছেন!");
+        if (existingSubmission)
+        {
+            return BadRequest(new { message = "আপনি ইতিমধ্যে এটি সাবমিট করেছেন। প্রয়োজনে এডিট করুন।" });
+        }
+
+        // Handle File Upload
+        string? filePath = null;
+        if (dto.File != null && dto.File.Length > 0)
+        {
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.File.FileName;
+            var fullPath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(fullPath, FileMode.Create))
+            {
+                await dto.File.CopyToAsync(stream);
+            }
+            filePath = $"/uploads/{uniqueFileName}";
+        }
 
         var submission = new Submission
         {
             AssignmentId = dto.AssignmentId,
             StudentId = studentId.Value,
-            AnswerContent = dto.AnswerContent,
+            AnswerContent = dto.AnswerContent ?? string.Empty,
+            FilePath = filePath,
             SubmittedAt = DateTime.UtcNow,
             Status = "Submitted"
         };
@@ -172,18 +201,62 @@ public class SubmissionsController : ControllerBase
         _context.Submissions.Add(submission);
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "অ্যাসাইনমেন্ট সফলভাবে জমা হয়েছে।" });
+        return Ok(new { message = "Assignment submitted successfully!" });
     }
 
-    // 4. GRADE SUBMISSION (Teacher & Admin Only)
+    // 4. PUT: api/Submissions (Update / Resubmit Assignment)
+    [HttpPut]
+    [Authorize(Roles = "Student,2,3")]
+    public async Task<IActionResult> UpdateSubmission([FromForm] CreateSubmissionDto dto)
+    {
+        var studentId = GetCurrentUserId();
+        if (studentId == null) return Unauthorized(new { message = "ইউজার সনাক্ত করা যায়নি।" });
+
+        var existingSubmission = await _context.Submissions
+            .Include(s => s.Assignment)
+            .FirstOrDefaultAsync(s => s.AssignmentId == dto.AssignmentId && s.StudentId == studentId.Value);
+
+        if (existingSubmission == null)
+        {
+            return NotFound(new { message = "পূর্বে কোনো সাবমিশন পাওয়া যায়নি।" });
+        }
+
+        if (existingSubmission.Assignment != null && existingSubmission.Assignment.Deadline < DateTime.UtcNow)
+        {
+            return BadRequest(new { message = "অ্যাসাইনমেন্টের ডেডলাইন শেষ হয়ে গেছে, উত্তর পরিবর্তন সম্ভব নয়।" });
+        }
+
+        existingSubmission.AnswerContent = dto.AnswerContent ?? string.Empty;
+        existingSubmission.SubmittedAt = DateTime.UtcNow;
+
+        if (dto.File != null && dto.File.Length > 0)
+        {
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.File.FileName;
+            var fullPath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(fullPath, FileMode.Create))
+            {
+                await dto.File.CopyToAsync(stream);
+            }
+
+            existingSubmission.FilePath = $"/uploads/{uniqueFileName}";
+        }
+
+        _context.Submissions.Update(existingSubmission);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Submission updated successfully!" });
+    }
+
+    // 5. GRADE SUBMISSION (Teacher & Admin Only)
     [HttpPut("{id}/grade")]
     [Authorize(Roles = "Teacher,Admin,1")]
     public async Task<IActionResult> GradeSubmission([FromRoute] int id, [FromBody] GradeSubmissionDto dto)
     {
-        if (dto == null)
-        {
-            return BadRequest("Invalid data provided.");
-        }
+        if (dto == null) return BadRequest("Invalid data provided.");
 
         var submission = await _context.Submissions
             .Include(s => s.Assignment)
@@ -193,20 +266,18 @@ public class SubmissionsController : ControllerBase
 
         if (dto.MarksObtained > submission.Assignment.MaxMarks)
         {
-            return BadRequest($"Marks cannot exceed the maximum limit of {submission.Assignment.MaxMarks}.");
+            return BadRequest($"Marks cannot exceed maximum limit of {submission.Assignment.MaxMarks}.");
         }
 
         submission.MarksObtained = dto.MarksObtained;
         submission.Feedback = dto.Feedback;
-        
-        // ডাইনামিকভাবে DTO থেকে স্ট্যাটাস আপডেট হবে (ফাঁকা থাকলে ডিফল্ট 'Graded' হবে)
         submission.Status = string.IsNullOrWhiteSpace(dto.Status) ? "Graded" : dto.Status;
 
         await _context.SaveChangesAsync();
         return Ok("Submission graded successfully.");
     }
 
-    // 5. GET MY SUBMISSIONS (Student Only)
+    // 6. GET MY SUBMISSIONS (Student Only)
     [HttpGet("my-submissions")]
     [Authorize(Roles = "Student,2,3")]
     public async Task<IActionResult> GetMySubmissions()
@@ -224,98 +295,14 @@ public class SubmissionsController : ControllerBase
                 AssignmentTitle = s.Assignment.Title,
                 MaxMarks = s.Assignment.MaxMarks,
                 Content = s.AnswerContent,
+                s.FilePath,
                 s.SubmittedAt,
                 s.MarksObtained,
                 s.Feedback,
-                Status = s.Status ?? "Submitted" // <--- Status added
+                Status = s.Status ?? "Submitted"
             })
             .ToListAsync();
 
         return Ok(submissions);
     }
-
-  //Notification in a create ----------|
-  [HttpPost]
-    public async Task<IActionResult> SubmitAssignment([FromForm] SubmissionDto dto)
-    {
-        string? filePath = null;
-        if (dto.File != null && dto.File.Length > 0)
-        {
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
-
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.File.FileName;
-            filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await dto.File.CopyToAsync(stream);
-            }
-            filePath = $"/uploads/{uniqueFileName}"; // DB-তে সেভ করার লিঙ্ক
-        }
-        // Database operation here...
-
-        return Ok(new { message = "Submitted successfully" });
-    } 
-    // 👉 PUT: api/Submissions (Resubmit / Update Work)
-        [HttpPut]
-        public async Task<IActionResult> UpdateSubmission([FromForm] int assignmentId, [FromForm] string answerContent, IFormFile? file)
-        {
-            // ১. JWT টোকেন থেকে স্টুডেন্ট আইডি বের করা
-            var studentIdClaim = User.FindFirst("id")?.Value 
-                              ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(studentIdClaim) || !int.TryParse(studentIdClaim, out int studentId))
-            {
-                return Unauthorized(new { message = "ইউজার সনাক্ত করা যায়নি।" });
-            }
-
-            // ২. সাবমিশন এবং সাথে থাকা অ্যাসাইনমেন্ট ডেটা খুঁজে বের করা
-            var existingSubmission = await _context.Submissions
-                .Include(s => s.Assignment)
-                .FirstOrDefaultAsync(s => s.AssignmentId == assignmentId && s.StudentId == studentId);
-
-            if (existingSubmission == null)
-            {
-                return NotFound(new { message = "পূর্বে কোনো সাবমিশন পাওয়া যায়নি।" });
-            }
-
-            // ৩. Deadline ফিল্ড চেক করা (Assignment Entity অনুযায়ী)
-            if (existingSubmission.Assignment != null && existingSubmission.Assignment.Deadline < DateTime.UtcNow)
-            {
-                return BadRequest(new { message = "অ্যাসাইনমেন্টের ডেডলাইন শেষ হয়ে গেছে, উত্তর পরিবর্তন সম্ভব নয়।" });
-            }
-
-            // ৪. উত্তর ও সাবমিশন টাইম আপডেট
-            existingSubmission.AnswerContent = answerContent ?? string.Empty;
-            existingSubmission.SubmittedAt = DateTime.UtcNow;
-
-            // ৫. নতুন ফাইল আপলোড হলে পুরনো ফাইল রিপ্লেস করা
-            if (file != null && file.Length > 0)
-            {
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-                if (!Directory.Exists(uploadsFolder))
-                {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
-
-                var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-
-                existingSubmission.FilePath = $"/uploads/{uniqueFileName}";
-            }
-
-            // database আপডেট
-            _context.Submissions.Update(existingSubmission);
-                await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Submission updated successfully!" });
-        }
-    }
-    
+}
