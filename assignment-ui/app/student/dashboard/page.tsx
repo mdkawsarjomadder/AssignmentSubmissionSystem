@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { getAuthToken, removeAuthToken } from '@/lib/auth';
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -29,11 +30,12 @@ interface GradeInfo {
 }
 
 function StudentDashboard() {
+  const router = useRouter();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [myGrades, setMyGrades] = useState<GradeInfo[]>([]);
   const [selectedGrade, setSelectedGrade] = useState<GradeInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,7 +50,7 @@ function StudentDashboard() {
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [submissionContent, setSubmissionContent] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isEditing, setIsEditing] = useState(false); // Resubmit Tracker
+  const [isEditing, setIsEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
 
@@ -61,46 +63,51 @@ function StudentDashboard() {
   }, [searchQuery, selectedSubject, activeTab]);
 
   const fetchDashboardData = async () => {
-    setLoading(true);
-    setError('');
     try {
-      const token = getAuthToken() || localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
+      setLoading(true);
+      setError(null);
+      
+      const token = getAuthToken() || localStorage.getItem("token");
 
-      const [assignmentsRes, gradesRes] = await Promise.all([
-        axios.get('http://localhost:5074/api/Assignments', config),
-        axios.get('http://localhost:5074/api/Submissions/my-grades', config),
+      if (!token) {
+       setError("Token not found! Please log in again.");
+        router.push('/login');
+        return;
+      }
+
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // (Promise.all)
+      const [assignmentsRes, gradesRes] = await Promise.allSettled([
+        axios.get("http://localhost:5074/api/Student/dashboard", { headers }),
+        axios.get("http://localhost:5074/api/Student/my-grades", { headers }) // আপনার ব্যাকএন্ডে গ্রেড এন্ডপয়েন্ট থাকলে
       ]);
 
-      const gradesData: GradeInfo[] = gradesRes.data || [];
-      setMyGrades(gradesData);
+      if (assignmentsRes.status === 'fulfilled') {
+        setAssignments(assignmentsRes.value.data || []);
+      } else {
+        throw assignmentsRes.reason;
+      }
 
-      const submittedTitles = new Set(gradesData.map((g) => g.assignmentTitle));
+      if (gradesRes.status === 'fulfilled') {
+        setMyGrades(gradesRes.value.data || []);
+      }
 
-      const rawAssignments = assignmentsRes.data.data || assignmentsRes.data || [];
-      const updatedAssignments = (Array.isArray(rawAssignments) ? rawAssignments : []).map(
-        (a: Assignment) => {
-          const defaultDate = new Date();
-          defaultDate.setDate(defaultDate.getDate() + 7);
-
-          const finalDueDate = a.dueDate || a.deadline || defaultDate.toISOString();
-
-          return {
-            ...a,
-            dueDate: finalDueDate,
-            isSubmitted: a.isSubmitted || submittedTitles.has(a.title),
-          };
-        }
-      );
-
-      setAssignments(updatedAssignments);
     } catch (err: any) {
-      console.error('Failed to load dashboard data:', err.response?.data || err.message);
-      setError(err.response?.data?.message || 'ডাটা লোড করতে সমস্যা হয়েছে।');
+      console.error("Dashboard Fetch Error:", err);
+
+        if (err.code === "ERR_NETWORK" || err.message === "Network Error") {
+      setError("Could not connect to the server! Please make sure the backend is running and CORS support is enabled.");
+    } else if (err.response?.status === 404) {
+      setError("API endpoint not found (404 Not Found). Please check the backend URL.");
+    } else if (err.response) {
+      const serverMessage = typeof err.response.data === "string" ? err.response.data : err.response.data?.message;
+      setError(serverMessage || `Server Error: ${err.response.status}`);
+    } else {
+    setError("An unknown error occurred while loading data.");      }
+    } finally {
+      setLoading(false);
     }
-    finally {
-          setLoading(false);
-        }
   };
 
   const formatDate = (dateString: any) => {
@@ -128,104 +135,99 @@ function StudentDashboard() {
   const handleLogout = () => {
     removeAuthToken();
     localStorage.removeItem('token');
-    window.location.href = '/login';
+    router.push('/login');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > 5 * 1024 * 1024) {
-        setModalMessage('error:ফাইল সাইজ সর্বোচ্চ 5MB হতে পারবে!');
+     setModalMessage('error:File size must not exceed 5MB!');
         return;
       }
       setSelectedFile(file);
       setModalMessage('');
     }
   };
-const handleSubmitAssignment = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!selectedAssignment) return;
 
-  if (!submissionContent.trim()) {
-    setModalMessage('error:অনুগ্রহ করে উত্তর প্রদান করুন!');
-    return;
-  }
+  const handleSubmitAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAssignment) return;
 
-  const due = selectedAssignment.dueDate || selectedAssignment.deadline;
-  if (isOverdue(due)) {
-    setModalMessage('error:সাময়িক দুঃখিত! এই অ্যাসাইনমেন্টের ডেডলাইন পার হয়ে গেছে।');
-    return;
-  }
-
-  setSubmitting(true);
-  setModalMessage('');
-
-  try {
-    const token = getAuthToken() || localStorage.getItem('token');
-
-    // Form Data সঠিকভাবে তৈরি করা
-    const formData = new FormData();
-    formData.append('assignmentId', selectedAssignment.id.toString());
-    formData.append('answerContent', submissionContent);
-    
-    if (selectedFile) {
-      formData.append('file', selectedFile);
+    if (!submissionContent.trim()) {
+     setModalMessage('error:Please provide an answer!');
+      return;
     }
 
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // Note: Content-Type ব্রাউজার অটোমেটিক multipart/form-data হ্যান্ডেল করবে
-      },
-    };
-
-    let response;
-    if (isEditing) {
-      response = await axios.put('http://localhost:5074/api/Submissions', formData, config);
-    } else {
-      response = await axios.post('http://localhost:5074/api/Submissions', formData, config);
+    const due = selectedAssignment.dueDate || selectedAssignment.deadline;
+    if (isOverdue(due)) {
+   setModalMessage('error:Sorry, the deadline for this assignment has passed.');      return;
     }
 
-    setModalMessage(`success:${response.data?.message || 'Assignment Submitted Successfully!'}`);
+    setSubmitting(true);
+    setModalMessage('');
 
-    setAssignments((prev) =>
-      prev.map((item) =>
-        item.id === selectedAssignment.id ? { ...item, isSubmitted: true } : item
-      )
-    );
+    try {
+      const token = getAuthToken() || localStorage.getItem('token');
 
-    setSubmissionContent('');
-    setSelectedFile(null);
-    setIsEditing(false);
+      const formData = new FormData();
+      formData.append('assignmentId', selectedAssignment.id.toString());
+      formData.append('answerContent', submissionContent);
+      
+      if (selectedFile) {
+        formData.append('file', selectedFile);
+      }
 
-    setTimeout(() => {
-      setSelectedAssignment(null);
-      setModalMessage('');
-      fetchDashboardData();
-    }, 1500);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
 
-  } catch (err: any) {
-    console.error('Submission Error:', err);
+      let response;
+      if (isEditing) {
+        response = await axios.put('http://localhost:5074/api/Submissions', formData, config);
+      } else {
+        response = await axios.post('http://localhost:5074/api/Submissions', formData, config);
+      }
 
-    let errorMsg = 'Submission Request Failed!';
+      setModalMessage(`success:${response.data?.message || 'Assignment Submitted Successfully!'}`);
 
-    if (err.response) {
-      // ব্যাকএন্ড যদি Validation error বা অন্য মেসেজ পাঠায়
-      const data = err.response.data;
-      errorMsg = data?.message || data?.title || (typeof data === 'string' ? data : 'Server validation error');
-    } else if (err.request) {
-      errorMsg = 'Cannot connect to backend server!';
-    } else {
-      errorMsg = err.message || 'An unexpected error occurred.';
+      setAssignments((prev) =>
+        prev.map((item) =>
+          item.id === selectedAssignment.id ? { ...item, isSubmitted: true } : item
+        )
+      );
+
+      setSubmissionContent('');
+      setSelectedFile(null);
+      setIsEditing(false);
+
+      setTimeout(() => {
+        setSelectedAssignment(null);
+        setModalMessage('');
+        fetchDashboardData();
+      }, 1500);
+
+    } catch (err: any) {
+      console.error('Submission Error:', err);
+      let errorMsg = 'Submission Request Failed!';
+
+      if (err.response) {
+        const data = err.response.data;
+        errorMsg = data?.message || data?.title || (typeof data === 'string' ? data : 'Server validation error');
+      } else if (err.request) {
+        errorMsg = 'Cannot connect to backend server!';
+      } else {
+        errorMsg = err.message || 'An unexpected error occurred.';
+      }
+
+      setModalMessage(`error:${errorMsg}`);
+    } finally {
+      setSubmitting(false);
     }
+  };
 
-    setModalMessage(`error:${errorMsg}`);
-  } finally {
-    setSubmitting(false);
-  }
-};
-
-  // Open Modal for Resubmit / Edit
   const handleOpenResubmit = (assignment: Assignment, existingGrade?: GradeInfo) => {
     setSelectedAssignment(assignment);
     setIsEditing(true);
@@ -530,101 +532,98 @@ const handleSubmitAssignment = async (e: React.FormEvent) => {
           </>
         )}
 
-       {/* Submit / Resubmit Modal */}
-{selectedAssignment && (
-  <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
-      <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 className="text-lg font-bold">
-          {isEditing ? 'Resubmit Work:' : 'Submit Work:'} {selectedAssignment.title}
-        </h3>
-        <button
-          onClick={() => {
-            setSelectedAssignment(null);
-            setModalMessage('');
-            setSelectedFile(null);
-            setIsEditing(false);
-          }}
-          className="text-slate-400 hover:text-white transition cursor-pointer"
-        >
-          ✕
-        </button>
-      </div>
+        {/* Submit / Resubmit Modal */}
+        {selectedAssignment && (
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 className="text-lg font-bold">
+                  {isEditing ? 'Resubmit Work:' : 'Submit Work:'} {selectedAssignment.title}
+                </h3>
+                <button
+                  onClick={() => {
+                    setSelectedAssignment(null);
+                    setModalMessage('');
+                    setSelectedFile(null);
+                    setIsEditing(false);
+                  }}
+                  className="text-slate-400 hover:text-white transition cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
 
-      {modalMessage && (
-        <div
-          className={`p-3 text-xs font-semibold rounded-xl border flex items-center gap-2 ${
-            modalMessage.startsWith('success:')
-              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-              : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-          }`}
-        >
-          <span>{modalMessage.startsWith('success:') ? '✅' : '❌'}</span>
-          <span>{modalMessage.replace(/^(success:|error:)/, '')}</span>
-        </div>
-      )}
+              {modalMessage && (
+                <div
+                  className={`p-3 text-xs font-semibold rounded-xl border flex items-center gap-2 ${
+                    modalMessage.startsWith('success:')
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                      : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                  }`}
+                >
+                  <span>{modalMessage.startsWith('success:') ? '✅' : '❌'}</span>
+                  <span>{modalMessage.replace(/^(success:|error:)/, '')}</span>
+                </div>
+              )}
 
-      <form onSubmit={handleSubmitAssignment} className="space-y-4">
-        {/* Solution Text */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">
-            Solution Text / Details
-          </label>
-          <textarea
-            rows={4}
-            value={submissionContent}
-            onChange={(e) => setSubmissionContent(e.target.value)}
-            placeholder="Write your main answer or explanation here..."
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm text-white focus:outline-none focus:border-indigo-500 transition resize-none"
-          />
-        </div>
+              <form onSubmit={handleSubmitAssignment} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Solution Text / Details
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={submissionContent}
+                    onChange={(e) => setSubmissionContent(e.target.value)}
+                    placeholder="Write your main answer or explanation here..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm text-white focus:outline-none focus:border-indigo-500 transition resize-none"
+                  />
+                </div>
 
-        {/* File/Image Upload Option */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">
-            Attach File / Image (Optional)
-          </label>
-          <input
-            type="file"
-            accept="image/*,.pdf,.doc,.docx"
-            onChange={handleFileChange}
-            className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-indigo-400 hover:file:bg-slate-700 cursor-pointer bg-slate-950 border border-slate-800 rounded-xl p-1"
-          />
-          {selectedFile && (
-            <p className="text-[11px] text-emerald-400 mt-1">
-              📎 Selected: {selectedFile.name}
-            </p>
-          )}
-        </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Attach File / Image (Optional)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf,.doc,.docx"
+                    onChange={handleFileChange}
+                    className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-indigo-400 hover:file:bg-slate-700 cursor-pointer bg-slate-950 border border-slate-800 rounded-xl p-1"
+                  />
+                  {selectedFile && (
+                    <p className="text-[11px] text-emerald-400 mt-1">
+                      📎 Selected: {selectedFile.name}
+                    </p>
+                  )}
+                </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-2">
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedAssignment(null);
-              setModalMessage('');
-              setSelectedFile(null);
-              setIsEditing(false);
-            }}
-            className="w-1/2 py-2.5 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={submitting}
-            className={`w-1/2 py-2.5 text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition cursor-pointer ${
-              isEditing ? 'bg-amber-600 hover:bg-amber-500' : 'bg-emerald-600 hover:bg-emerald-500'
-            }`}
-          >
-            {submitting ? 'Updating...' : isEditing ? 'Confirm Resubmit' : 'Confirm Submit'}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedAssignment(null);
+                      setModalMessage('');
+                      setSelectedFile(null);
+                      setIsEditing(false);
+                    }}
+                    className="w-1/2 py-2.5 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className={`w-1/2 py-2.5 text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition cursor-pointer ${
+                      isEditing ? 'bg-amber-600 hover:bg-amber-500' : 'bg-emerald-600 hover:bg-emerald-500'
+                    }`}
+                  >
+                    {submitting ? 'Updating...' : isEditing ? 'Confirm Resubmit' : 'Confirm Submit'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* View Grade & Feedback Modal */}
         {selectedGrade && (
@@ -702,4 +701,3 @@ export default function StudentDashboardPage() {
     </ProtectedRoute>
   );
 }
-

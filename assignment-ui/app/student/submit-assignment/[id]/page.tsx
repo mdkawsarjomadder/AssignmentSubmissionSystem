@@ -24,7 +24,7 @@ export default function SubmitAssignmentPage({ params }: { params: Promise<{ id:
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // 1. Assignment details এবং Existing Submission Fetch করা
+  // 1. Assignment details  Existing Submission Fetch 
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -47,7 +47,7 @@ export default function SubmitAssignmentPage({ params }: { params: Promise<{ id:
           }
         }
 
-        // Fetch Existing Submission (যদি স্টুডেন্ট আগে জমা দিয়ে থাকে)
+        // Fetch Existing Submission 
         try {
           const subRes = await axios.get(
             `http://localhost:5074/api/Submissions/my-submissions`,
@@ -81,12 +81,12 @@ export default function SubmitAssignmentPage({ params }: { params: Promise<{ id:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!answerContent.trim()) {
-      alert('অনুগ্রহ করে আপনার উত্তর লিখুন!');
+      alert('Please write your answer!');
       return;
     }
 
     if (isExpired) {
-      alert('সাময়িক দুঃখিত! এই অ্যাসাইনমেন্টের ডেডলাইন পার হয়ে গেছে।');
+     alert('Sorry, the deadline for this assignment has passed.');
       return;
     }
 
@@ -104,7 +104,7 @@ export default function SubmitAssignmentPage({ params }: { params: Promise<{ id:
           },
           { headers }
         );
-        alert('আপনার উত্তর সফলভাবে আপডেট করা হয়েছে!');
+      alert('Your answer has been updated successfully!');
       } else {
         // Create new submission (POST Request)
         await axios.post(
@@ -115,13 +115,13 @@ export default function SubmitAssignmentPage({ params }: { params: Promise<{ id:
           },
           { headers }
         );
-        alert('আপনার উত্তর সফলভাবে জমা হয়েছে!');
+      alert('Your answer has been submitted successfully!');
       }
 
       router.push('/student/dashboard');
     } catch (err: any) {
       console.error('Submission failed', err);
-      alert(err.response?.data || 'উত্তর জমা দিতে/আপডেট করতে সমস্যা হয়েছে।');
+      alert(err.response?.data || 'Failed to submit or update the answer.');
     } finally {
       setSubmitting(false);
     }
@@ -184,8 +184,8 @@ export default function SubmitAssignmentPage({ params }: { params: Promise<{ id:
               onChange={(e) => setAnswerContent(e.target.value)}
               placeholder={
                 isExpired 
-                  ? "ডেডলাইন শেষ হয়ে গেছে। এখন আর উত্তর দেওয়া বা পরিবর্তন করা যাবে না।" 
-                  : "এখানে আপনার অ্যাসাইনমেন্টের বিস্তারিত উত্তর লিখুন..."
+                 ? "The deadline has passed. You can no longer submit or edit your response." 
+                  : "Enter your detailed assignment answer here..."
               }
               className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
             />

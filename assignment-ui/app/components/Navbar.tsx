@@ -34,8 +34,8 @@ export default function Navbar({
   };
 
   return (
-    // max-w-6xl mx-auto px-6 যোগ করায় Navbar-এর ডানে ও বামে খালি জায়গা (Space) চলে আসবে
-    <div className="max-w-6xl mx-auto px-6 pt-6 pb-6 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    // max-w-6xl সরিয়ে w-full এবং px-6 sm:px-12/16 ব্যবহার করা হয়েছে যেন নিচের কন্টেন্টের সাথে সুন্দরভাবে এলাইন হয়
+    <div className="w-full px-6 sm:px-10 pt-6 pb-6 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
       <div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
           {title}

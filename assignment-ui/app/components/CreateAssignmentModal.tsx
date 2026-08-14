@@ -20,7 +20,7 @@ export default function CreateAssignmentModal({ isOpen, onClose, onSuccess }: Mo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // API থেকে Subject List ফেচ করা (404 এরর দিলে ডিফল্ট সাবজেক্ট হ্যান্ডেল করবে)
+  // API থেকে Subject List ফেচ করা (Handles default subject if 404 error occurs)
   useEffect(() => {
     if (isOpen) {
       const fetchSubjects = async () => {
@@ -35,8 +35,7 @@ export default function CreateAssignmentModal({ isOpen, onClose, onSuccess }: Mo
             setSubjectId(list[0].id);
           }
         } catch (err: any) {
-          console.warn('Subjects API পাওয়া যায়নি (404), Default Subject (ID: 1) ব্যবহার করা হচ্ছে।');
-          setSubjectId(1);
+      console.warn('Subjects API not found (404), using Default Subject (ID: 1).');          setSubjectId(1);
         }
       };
       fetchSubjects();
@@ -85,7 +84,7 @@ export default function CreateAssignmentModal({ isOpen, onClose, onSuccess }: Mo
       const backendError =
         err.response?.data?.message ||
         (typeof err.response?.data === 'string' ? err.response?.data : null) ||
-        'অ্যাসাইনমেন্ট তৈরি করতে সমস্যা হয়েছে।';
+        'Failed to create assignment.';
       setError(backendError);
     } finally {
       setLoading(false);

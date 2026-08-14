@@ -16,7 +16,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // ১. ব্যাকএন্ড API-তে লগইন রিকোয়েস্ট পাঠানো
       const response = await fetch("http://localhost:5074/api/auth/login", {
         method: "POST",
         headers: {
@@ -35,11 +34,10 @@ export default function LoginPage() {
       // ২. টোকেন ও রোল LocalStorage-এ সেভ করা
       localStorage.setItem("token", data.token);
       
-      // ব্যাকএন্ড থেকে রোল আসলে সেটি সেট করবে, না থাকলে টেস্টের জন্য ডিফল্ট হ্যান্ডেল করবে
       const userRole = data.role || (email.includes("admin") ? "Admin" : email.includes("teacher") ? "Teacher" : "Student");
       localStorage.setItem("role", userRole);
 
-      // ৩. রোলের ওপর ভিত্তি করে ড্যাশবোর্ডে নেভিগেট করা
+
       if (userRole.toLowerCase() === "admin") {
         router.push("/admin/dashboard");
       } else if (userRole.toLowerCase() === "teacher") {
