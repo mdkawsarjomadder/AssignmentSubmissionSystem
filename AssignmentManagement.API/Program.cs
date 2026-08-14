@@ -15,12 +15,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // 2. CORS Policy Setup (AllowAll)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
+    options.AddPolicy("AllowAll",
+        policy => policy
+            .WithOrigins("http://localhost:3000") // আপনার Next.js এর URL
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials());
 });
 
 // 3. JWT Authentication Setup

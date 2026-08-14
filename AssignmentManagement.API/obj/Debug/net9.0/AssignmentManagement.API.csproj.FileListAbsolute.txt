@@ -169,3 +169,4 @@ D:\D_Net\AssignmentManagement.API\AssignmentManagement.API\obj\Debug\net9.0\refi
 D:\D_Net\AssignmentManagement.API\AssignmentManagement.API\obj\Debug\net9.0\AssignmentManagement.API.pdb
 D:\D_Net\AssignmentManagement.API\AssignmentManagement.API\obj\Debug\net9.0\AssignmentManagement.API.genruntimeconfig.cache
 D:\D_Net\AssignmentManagement.API\AssignmentManagement.API\obj\Debug\net9.0\ref\AssignmentManagement.API.dll
+D:\D_Net\AssignmentManagement.API\AssignmentManagement.API\bin\Debug\net9.0\AssignmentManagement.API.staticwebassets.runtime.json

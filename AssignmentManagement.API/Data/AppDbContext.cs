@@ -15,6 +15,8 @@ public class AppDbContext : DbContext
     public DbSet<Submission> Submissions => Set<Submission>();
     public DbSet<SchoolClass> schoolClasses => Set<SchoolClass>();
 
+    public DbSet<TeacherAssignment> TeacherAssignments {get; set;}
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
